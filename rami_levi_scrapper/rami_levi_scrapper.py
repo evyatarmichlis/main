@@ -1,3 +1,5 @@
+import time
+
 import pandas as pd
 import requests
 
@@ -14,17 +16,10 @@ def upload_df_to_mysql(dataframe, table_name, db_config=None):
     if db_config is None:
         db_config = db_config_
 
-    try:
         connection = mysql.connector.connect(**db_config)
         dataframe.to_sql(name=table_name, con=connection, if_exists='replace', index=False)
 
         print(f"DataFrame uploaded to table '{table_name}' in MySQL database successfully.")
-
-    except Exception as error:
-        print(f"Error: {error}")
-
-    finally:
-        connection.close()
 
 
 
@@ -58,7 +53,11 @@ def fetch_all_products(store_id=331, limit=300):
                 all_products.append(data)
     df = pd.DataFrame([item for sublist in all_products for item in sublist])
     df = df[["name", "price", "id", "group", "subGroup"]]
-    upload_df_to_mysql(df,"items",)
+    df["franchise"] = "rami_levi"
+    df["timestamp"] = time.time()
+    df["store_id"] = store_id
+    df = df.rename({"group":"category","id":"item_id","subGroup":"subgroup"})
+    upload_df_to_mysql(df,"items")
 
 fetch_all_products()
 
